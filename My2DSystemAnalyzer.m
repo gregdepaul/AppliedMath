@@ -1,20 +1,29 @@
 function [] = My2DSystemAnalyzer() 
+    
+    % Symbolic System
+    symbolic = 1;
+    
+    syms a;
+    assume(a, 'real');
 
-    a = -2;
-    b = -3;
+    syms b;
+    assume(b, 'real');
 
     % Specify System
-    x_dot = @(x, y) x - y;
-    y_dot = @(x, y) x + y;
+    x_dot = @(x, y) x - y*x; 
+    y_dot = @(x, y) -a*y + b*y*x;
     
     % Constants
     epsilon = 10^(-3); % Degree of allowable similarity between fixed points identified numerically
     h = 0.01; % Resolution for vector field
     r = 1; % Bounding box radius around each fixed point
-    vector_normalizer = 3; % Divide the vectors drawn for decoupled fixed points
+    vector_normalizer = 5; % Divide the vectors drawn for decoupled fixed points
     
     % Draw Real Vectos
     draw_real_eigenvectors = 1;
+    
+    % Draw Nullclines
+    draw_nullclines = 1;
     
     % Override Plot Bounds
     override_bounds = 0;
@@ -83,6 +92,7 @@ function [] = My2DSystemAnalyzer()
     
     % Perform Calculations About Each Fixed Point
     if isempty(S.x)
+        fprintf('No steady states found\n');
         min_X = -1;
         max_X = 1;
         min_Y = -1;
@@ -92,114 +102,131 @@ function [] = My2DSystemAnalyzer()
         max_X = -100;
         min_Y = 100;
         max_Y = -100;
-        for i = 1:length(S.x)    
-            if S.x(i) > max_X
-                max_X = S.x(i);
-            end
-            if S.x(i) < min_X
-                min_X = S.x(i);
-            end
-            if S.y(i) > max_Y
-                max_Y = S.y(i);
-            end
-            if S.y(i) < min_Y
-                min_Y = S.y(i);
+        for i = 1:length(S.x)   
+            fprintf('Applying Linear Stability Analysis: \n');
+            
+            if symbolic == 0
+                if S.x(i) > max_X
+                    max_X = S.x(i);
+                end
+                if S.x(i) < min_X
+                    min_X = S.x(i);
+                end
+                if S.y(i) > max_Y
+                    max_Y = S.y(i);
+                end
+                if S.y(i) < min_Y
+                    min_Y = S.y(i);
+                end
             end
             J = [diff(f,x) diff(f,y); diff(g,x) diff(g,y)];
-            J = subs(subs(J, x, S.x(i)), y, S.y(i)); 
+            J = subs(subs(J, x, S.x(i)), y, S.y(i))
             [V,D] = eig(J);
+            fprintf('Steady State:');
+            disp([S.x(i) S.y(i)]);
             eigenvalues = diag(D)
-            latex(V(:,1))
-            latex(V(:,2))
-            %c = V^(-1)*[x_0; y_0];
-            %latex(c(1)*exp(D*t)*V(:,1) + c(2)*exp(D*t)*V(:,2))
             
-            if eigenvalues == real(eigenvalues)
-                
-                if eigenvalues(1) ~= eigenvalues(2)
-                    % Distinct Real Eigenvalues
-                    if min(eigenvalues) > 0
-                        fprintf('(%.2f, %.2f) is an unstable node \n',S.x(i), S.y(i));
-                    elseif max(eigenvalues) < 0
-                        fprintf('(%.2f, %.2f) is a stable node \n',S.x(i), S.y(i));
-                    else
-                        fprintf('(%.2f, %.2f) is a saddle point \n',S.x(i), S.y(i));
-                    end
-                else
-                    eigenvectors_size = size(V);
-                    % Repeated Eigenvalues
-                    if eigenvectors_size(2) == 1
-                        % Emits a Single Eigenvectors
-                        if eigenvalues(1) > 0
-                            fprintf('(%.2f, %.2f) is an unstable degenerate node \n',S.x(i), S.y(i));
+            if symbolic ~= 1
+                if eigenvalues == real(eigenvalues)
+
+                    if eigenvalues(1) ~= eigenvalues(2)
+                        % Distinct Real Eigenvalues
+                        if min(eigenvalues) > 0
+                            fprintf('(%.2f, %.2f) is an unstable node \n',S.x(i), S.y(i));
+                        elseif max(eigenvalues) < 0
+                            fprintf('(%.2f, %.2f) is a stable node \n',S.x(i), S.y(i));
                         else
-                            fprintf('(%.2f, %.2f) is a stable degenerate node \n',S.x(i), S.y(i));
+                            fprintf('(%.2f, %.2f) is a saddle point \n',S.x(i), S.y(i));
                         end
                     else
-                        % Two Linearly Independent Eigenvectors
-                        fprintf('(%.2f, %.2f) is a star node \n',S.x(i), S.y(i));
+                        eigenvectors_size = size(V);
+                        % Repeated Eigenvalues
+                        if eigenvectors_size(2) == 1
+                            % Emits a Single Eigenvectors
+                            if eigenvalues(1) > 0
+                                fprintf('(%.2f, %.2f) is an unstable degenerate node \n',S.x(i), S.y(i));
+                            else
+                                fprintf('(%.2f, %.2f) is a stable degenerate node \n',S.x(i), S.y(i));
+                            end
+                        else
+                            % Two Linearly Independent Eigenvectors
+                            fprintf('(%.2f, %.2f) is a star node \n',S.x(i), S.y(i));
+                        end
                     end
-                end
-                
-                if draw_real_eigenvectors == 1
-                    eigenvectors_size = size(V);
 
-                    myColor = [rand() rand() rand()];
-                    for k=1:eigenvectors_size(2)
-                        quiver(double(S.x(i)), double(S.y(i)), V(1, k)/vector_normalizer, V(2,k)/vector_normalizer,'linewidth',5,'color',myColor)
-                        hold on
-                        quiver(double(S.x(i)), double(S.y(i)), -V(1, k)/vector_normalizer, -V(2,k)/vector_normalizer,'linewidth',5,'color',myColor)
-                        hold on
+                    if draw_real_eigenvectors == 1
+                        eigenvectors_size = size(V);
+
+                        myColor = [rand() rand() rand()];
+                        for k=1:eigenvectors_size(2)
+                            quiver(double(S.x(i)), double(S.y(i)), V(1, k)/vector_normalizer, V(2,k)/vector_normalizer,'linewidth',5,'color',myColor)
+                            hold on
+                            quiver(double(S.x(i)), double(S.y(i)), -V(1, k)/vector_normalizer, -V(2,k)/vector_normalizer,'linewidth',5,'color',myColor)
+                            hold on
+                        end
                     end
-                end
-            else
-                % Complex Eigenvalues
-                real_component = real(eigenvalues(1));
-                if real_component > 0
-                    fprintf('(%.2f, %.2f) is an unstable spiral \n',S.x(i), S.y(i));
-                elseif real_component < 0
-                    fprintf('(%.2f, %.2f) is a stable spiral \n',S.x(i), S.y(i));
                 else
-                    fprintf('(%.2f, %.2f) is a center \n',S.x(i), S.y(i));
+                    % Complex Eigenvalues
+                    real_component = real(eigenvalues(1));
+                    if real_component > 0
+                        fprintf('(%.2f, %.2f) is an unstable spiral \n',S.x(i), S.y(i));
+                    elseif real_component < 0
+                        fprintf('(%.2f, %.2f) is a stable spiral \n',S.x(i), S.y(i));
+                    else
+                        fprintf('(%.2f, %.2f) is a center \n',S.x(i), S.y(i));
+                    end
                 end
             end
         end
     end
     
-    % Account for resolution
-    min_X = min_X - r; 
-    max_X = max_X + r;
-    min_Y = min_Y - r; 
-    max_Y = max_Y + r;
+    if symbolic ~= 1
+    
+        % Account for resolution
+        min_X = min_X - r; 
+        max_X = max_X + r;
+        min_Y = min_Y - r; 
+        max_Y = max_Y + r;
 
-    % In case bounds are still bad
-    if override_bounds == 1
-        min_X = new_plot_bounds(1);
-        max_X = new_plot_bounds(2);
-        min_Y = new_plot_bounds(3);
-        max_Y = new_plot_bounds(4);
+        % In case bounds are still bad
+        if override_bounds == 1
+            min_X = new_plot_bounds(1);
+            max_X = new_plot_bounds(2);
+            min_Y = new_plot_bounds(3);
+            max_Y = new_plot_bounds(4);
+        end
+
+        % Draw Vector Field
+        X_ = double(min_X):h:double(max_X);
+        Y_ = double(min_Y):h:double(max_Y);
+        [X, Y] = meshgrid(X_,Y_);
+        Z_1 = arrayfun(x_dot, X, Y);
+        Z_2 = arrayfun(y_dot, X, Y);
+        streamslice(X,Y, Z_1, Z_2);
+        axis([double(min_X) double(max_X) double(min_Y) double(max_Y)])
+
+        if draw_nullclines == 1
+            v = [0,0];
+            hold on
+            [M,c] = contour(X,Y,Z_1,v,':blue');
+            c.LineWidth = 3;
+            hold on
+            [M,c] = contour(X,Y,Z_2,v,':red');
+            c.LineWidth = 3;
+        end
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%
+        % Axis Preferences
+        %%%%%%%%%%%%%%%%%%%%%%%%%
+        hl = xlabel('$x$');
+        set(hl, 'Interpreter', 'latex');
+        hl = ylabel('$y$');
+        set(gca,'FontSize',20);
+        set(hl, 'Interpreter', 'latex');
+        %hl = title('$x^*$ vs $h$');
+        %set(hl, 'Interpreter', 'latex');
+        %set(gca,'xtick',[])
+        %set(gca,'ytick',[])
     end
-    
-    % Draw Vector Field
-    X_ = double(min_X):h:double(max_X);
-    Y_ = double(min_Y):h:double(max_Y);
-    [X, Y] = meshgrid(X_,Y_);
-    Z_1 = arrayfun(x_dot, X, Y);
-    Z_2 = arrayfun(y_dot, X, Y);
-    streamslice(X,Y, Z_1, Z_2);
-    axis([double(min_X) double(max_X) double(min_Y) double(max_Y)])
-    
-      %%%%%%%%%%%%%%%%%%%%%%%%%
-    % Axis Preferences
-    %%%%%%%%%%%%%%%%%%%%%%%%%
-    hl = xlabel('$x$');
-    set(hl, 'Interpreter', 'latex');
-    hl = ylabel('$y$');
-    set(gca,'FontSize',20);
-    set(hl, 'Interpreter', 'latex');
-    %hl = title('$x^*$ vs $h$');
-    %set(hl, 'Interpreter', 'latex');
-    %set(gca,'xtick',[])
-    %set(gca,'ytick',[])
     
 end

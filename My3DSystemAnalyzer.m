@@ -6,9 +6,9 @@ function [] = My3DSystemAnalyzer()
     z_dot = @(x, y, z) 0*x + 2*y + -1*z;
     
     % Constants
-    epsilon = 10^(-3); % Degree of allowable similarity between fixed points identified numerically
+    epsilon = 10^(-2); % Degree of allowable similarity between fixed points identified numerically
     h = 0.01; % Resolution for vector field
-    r = 4; % Bounding box radius around each fixed point
+    r = 2; % Bounding box radius around each fixed point
     num_curves = 50; % Number of curves to be drawn
 
     % Identify Fixed Points

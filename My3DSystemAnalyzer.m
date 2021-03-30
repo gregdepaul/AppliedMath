@@ -4,12 +4,18 @@ function [] = My3DSystemAnalyzer()
     x_dot = @(x, y, z) -2*x + 1*y + 0*z;
     y_dot = @(x, y, z) 0*x + -1*y + -2*z;
     z_dot = @(x, y, z) 0*x + 2*y + -1*z;
+
+%     x_dot = @(x, y, z) -10*(y - x);
+%     y_dot = @(x, y, z) 28*x - y - x*z;
+%     z_dot = @(x, y, z) -8/3*z + x*y;
     
     % Constants
-    epsilon = 10^(-2); % Degree of allowable similarity between fixed points identified numerically
-    h = 0.01; % Resolution for vector field
-    r = 2; % Bounding box radius around each fixed point
+    epsilon = 10^(-3); % Degree of allowable similarity between fixed points identified numerically
+    h = 0.1; % Resolution for vector field
+    r = 100; % Bounding box radius around each fixed point
     num_curves = 50; % Number of curves to be drawn
+    curve_res = 200; % Resolution of curves
+    curve_length = 1; % Length of curve (relative to curve's derivative)
 
     % Identify Fixed Points
     syms x y z
@@ -29,7 +35,7 @@ function [] = My3DSystemAnalyzer()
         J = [diff(f,x) diff(f,y), diff(f,z); diff(g,x) diff(g,y), diff(g,z); diff(h,x) diff(h,y), diff(h,z)];
         J = subs(subs(subs(J, x, S.x(i)), y, S.y(i)),z,S.z(i)); 
         [V,D] = eig(J);
-        eigenvalues = diag(D)
+        eigenvalues = diag(D);
         latex(V(:,1))
         latex(V(:,2))
         latex(V(:,3))
@@ -38,7 +44,7 @@ function [] = My3DSystemAnalyzer()
             f = @(t,x)[x_dot(x(1), x(2), x(3))
                 y_dot(x(1), x(2), x(3))
                 z_dot(x(1), x(2), x(3))];
-            t=linspace(0,1,200);
+            t=linspace(0,curve_length,curve_res);
             [t,x]=ode45(f,t,a);
             cm = jet(numel(t));
             hold on
@@ -63,10 +69,5 @@ function [] = My3DSystemAnalyzer()
     hl = zlabel('$z$');
     set(hl, 'Interpreter', 'latex');
     set(gca,'FontSize',20);
-    
-    %hl = title('$x^*$ vs $h$');
-    %set(hl, 'Interpreter', 'latex');
-    %set(gca,'xtick',[])
-    %set(gca,'ytick',[])
     
 end

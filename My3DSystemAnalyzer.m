@@ -2,14 +2,14 @@ function [] = My3DSystemAnalyzer()
 
     % Specify System
     x_dot = @(x, y, z) -2*x + 1*y + 0*z;
-    y_dot = @(x, y, z) 0*x + 1*y + 1*z;
-    z_dot = @(x, y, z) 0*x + 4*y + -2*z;
+    y_dot = @(x, y, z) 0*x + -1*y + -2*z;
+    z_dot = @(x, y, z) 0*x + 2*y + -1*z;
     
     % Constants
     epsilon = 10^(-3); % Degree of allowable similarity between fixed points identified numerically
     h = 0.01; % Resolution for vector field
     r = 4; % Bounding box radius around each fixed point
-    num_curves = 20; % Number of curves to be drawn
+    num_curves = 50; % Number of curves to be drawn
 
     % Identify Fixed Points
     syms x y z

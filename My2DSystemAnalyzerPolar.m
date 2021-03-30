@@ -1,22 +1,21 @@
-function [] = My2DSystemAnalyzer() 
+function [] = My2DSystemAnalyzerPolar() 
     
     % Symbolic System
 	symbolic = 0;
-    
-    % Perturbation Term
-    %syms a epsilon;
-    %assume(a, 'real');
-    %assume(epsilon,'positive');
+
+    % Polar Coordinate System
+    drdt = @(x,y) sqrt(x^2 + y^2)*(1 - x^2 - y^2);
+    dthetadt = @(x,y) 0;
     
     % Specify System
-    x_dot = @(x, y) y;
-    y_dot = @(x, y) y - 1/4*x + 1/4*x^2;
+    x_dot = @(x, y) drdt(x, y) * x / sqrt(x^2 + y^2) - y*dthetadt(x,y); 
+    y_dot = @(x, y) drdt(x, y) * y / sqrt(x^2 + y^2) + x*dthetadt(x,y);
     
     % Constants
     epsilon = 10^(-3); % Degree of allowable similarity between fixed points identified numerically
     h = 0.01; % Resolution for vector field
     r = 1; % Bounding box radius around each fixed point
-    vector_normalizer = 10; % Divide the vectors drawn for decoupled fixed points
+    vector_normalizer = 3; % Divide the vectors drawn for decoupled fixed points
     
     % Draw Real Vectos
     draw_real_eigenvectors = 1;
@@ -24,18 +23,15 @@ function [] = My2DSystemAnalyzer()
     % Draw Nullclines
     draw_nullclines = 0;
     
-    % Draw Vector Magnitudes
-    draw_contour = 0;
-    
     % Override Plot Bounds
     override_bounds = 0;
-    new_plot_bounds = [-1 3 0 4];
+    new_plot_bounds = [-2 2 -3 3];
     
     % Override Numerical Solver Params
     % NOTICE: Turn off when dealing with purely polynomial equations
     numerical_override = 0;
-    numerical_search_range = [ -3*pi 3*pi; -2 2];
-    number_of_possible_fixed_points = 2;
+    numerical_search_range = [ -2 2; -2 2];
+    number_of_possible_fixed_points = 11;
 
     % Identify Fixed Points
     syms x y x_0 y_0 t
@@ -121,17 +117,12 @@ function [] = My2DSystemAnalyzer()
                     min_Y = S.y(i);
                 end
             end
-            S.x(i) 
-            S.y(i)
             J = [diff(f,x) diff(f,y); diff(g,x) diff(g,y)];
             J = subs(subs(J, x, S.x(i)), y, S.y(i))
-            
-            latex(simplify(J))
             [V,D] = eig(J);
             fprintf('Steady State:');
             disp([S.x(i) S.y(i)]);
             eigenvalues = diag(D)
-            latex(eigenvalues)
             
             if symbolic ~= 1
                 if eigenvalues == real(eigenvalues)
@@ -210,14 +201,7 @@ function [] = My2DSystemAnalyzer()
         [X, Y] = meshgrid(X_,Y_);
         Z_1 = arrayfun(x_dot, X, Y);
         Z_2 = arrayfun(y_dot, X, Y);
-        
-        if draw_contour
-            Z = arrayfun(@(x,y) sqrt(x^2 + y^2), Z_1, Z_2);
-            contourf(X,Y,Z,20)
-        end
-        
         streamslice(X,Y, Z_1, Z_2);
-        
         axis([double(min_X) double(max_X) double(min_Y) double(max_Y)])
 
         if draw_nullclines == 1
@@ -238,26 +222,10 @@ function [] = My2DSystemAnalyzer()
         hl = ylabel('$y$');
         set(gca,'FontSize',20);
         set(hl, 'Interpreter', 'latex');
-        %axis([0 max(X_) 0 max(Y_)])
         %hl = title('$x^*$ vs $h$');
         %set(hl, 'Interpreter', 'latex');
         %set(gca,'xtick',[])
         %set(gca,'ytick',[])
-        
-        %circle(0,0,1);
-        %circle(0,0,1/sqrt(2));
     end
     
-end
-
-function circle(x,y,r)
-    %x and y are the coordinates of the center of the circle
-    %r is the radius of the circle
-    %0.01 is the angle step, bigger values will draw the circle faster but
-    %you might notice imperfections (not very smooth)
-    ang=0:0.01:2*pi; 
-    xp=r*cos(ang);
-    yp=r*sin(ang);
-    hold on;
-    plot(x+xp,y+yp,'LineWidth',3);
 end

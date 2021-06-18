@@ -1,13 +1,13 @@
 function [] = My3DSystemAnalyzer() 
 
     % Specify System
-    x_dot = @(x, y, z) -2*x + 1*y + 0*z;
-    y_dot = @(x, y, z) 0*x + -1*y + -2*z;
-    z_dot = @(x, y, z) 0*x + 2*y + -1*z;
+%     x_dot = @(x, y, z) -2*x + 1*y + 0*z;
+%     y_dot = @(x, y, z) 0*x + -1*y + -2*z;
+%     z_dot = @(x, y, z) 0*x + 2*y + -1*z;
 
-%     x_dot = @(x, y, z) -10*(y - x);
-%     y_dot = @(x, y, z) 28*x - y - x*z;
-%     z_dot = @(x, y, z) -8/3*z + x*y;
+    x_dot = @(x, y, z) -10*(y - x);
+    y_dot = @(x, y, z) 28*x - y - x*z;
+    z_dot = @(x, y, z) -8/3*z + x*y;
     
     % Constants
     epsilon = 10^(-3); % Degree of allowable similarity between fixed points identified numerically
